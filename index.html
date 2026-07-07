@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>GymLog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000000;
+    --card:#1c1c1e;
+    --card-soft:#19191b;
+    --line:rgba(255,255,255,0.07);
+    --text:#f2f2f4;
+    --text-dim:#8e8e93;
+    --text-faint:#5a5a5e;
+    --white:#ffffff;
+    --dot-off:rgba(255,255,255,0.14);
+    --dot-on:#ffffff;
+    --radius-lg:28px;
+    --radius-md:22px;
+    --radius-sm:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html,body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',-apple-system,sans-serif;
+    min-height:100vh;
+  }
+  .app{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    padding-bottom:110px;
+    position:relative;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    padding:22px 20px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  h1.title{
+    font-size:34px;
+    font-weight:800;
+    letter-spacing:-0.5px;
+    margin:0;
+  }
+  .icon-btns{display:flex;gap:10px;}
+  .icon-circle{
+    width:44px;height:44px;border-radius:50%;
+    background:var(--card);
+    border:none;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .icon-circle:active{background:#2a2a2c;}
+  .icon-circle svg{width:19px;height:19px;}
+
+  main{padding:0 20px;}
+
+  /* ---------- Generic bento grid ---------- */
+  .grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .card{
+    background:var(--card);
+    border-radius:var(--radius-lg);
+    padding:18px;
+  }
+  .card.tap{cursor:pointer;}
+  .card.tap:active{background:#232325;}
+
+  /* Ring + label cards */
+  .ring-card .top-row{display:flex;justify-content:space-between;align-items:flex-start;}
+  .ring{position:relative;width:56px;height:56px;}
+  .ring svg{width:56px;height:56px;transform:rotate(-90deg);}
+  .ring .num{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:18px;color:var(--white);
+  }
+  .card-title{font-size:18px;font-weight:700;margin-top:22px;line-height:1.2;}
+  .card-sub{font-size:13.5px;color:var(--text-dim);margin-top:3px;}
+  .mini-icon-btn{
+    width:26px;height:26px;color:var(--text-faint);display:flex;align-items:center;justify-content:center;
+  }
+  .mini-icon-btn svg{width:16px;height:16px;}
+
+  /* Stat card (body weight) */
+  .stat-big{display:flex;align-items:baseline;gap:6px;margin-top:6px;}
+  .stat-big .n{font-size:40px;font-weight:800;letter-spacing:-1px;}
+  .stat-big .u{font-size:17px;color:var(--text-dim);font-weight:600;}
+  .stat-title{font-size:18px;font-weight:700;margin-top:16px;}
+  .stat-sub{font-size:13.5px;color:var(--text-dim);margin-top:3px;}
+
+  /* Big combined card: dot calendar + previous session */
+  .card-wide{
+    background:var(--card);
+    border-radius:var(--radius-lg);
+    padding:20px 18px 6px;
+    margin-bottom:12px;
+  }
+  .month-cluster-row{
+    display:flex;justify-content:space-between;gap:10px;
+  }
+  .month-cluster{flex:1;display:flex;flex-direction:column;align-items:center;}
+  .month-label{font-size:12.5px;color:var(--text-dim);font-weight:600;margin-bottom:10px;}
+  .dot-grid{
+    display:flex;flex-wrap:wrap;
+    width:64px;
+    gap:6px;
+    justify-content:flex-start;
+  }
+  .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--dot-off);
+    flex:0 0 auto;
+  }
+  .dot.on{background:var(--dot-on);}
+  .wide-divider{height:1px;background:var(--line);margin:20px 0 0;}
+  .prev-session-row{
+    display:flex;align-items:center;gap:14px;
+    padding:16px 0 18px;
+  }
+  .prev-session-row .ring{flex:0 0 auto;}
+  .prev-session-row .info{flex:1;min-width:0;}
+  .prev-session-row .info .t{font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .prev-session-row .info .s{font-size:13.5px;color:var(--text-dim);margin-top:2px;}
+
+  /* Volume card */
+  .volume-card{
+    background:var(--card);border-radius:var(--radius-lg);
+    padding:18px 18px;margin-bottom:12px;
+    display:flex;align-items:center;justify-content:space-between;
+    cursor:pointer;
+  }
+  .volume-card .left .t{font-size:16.5px;font-weight:700;}
+  .volume-card .left .s{font-size:13.5px;color:var(--text-dim);margin-top:2px;}
+  .volume-card .right{display:flex;align-items:baseline;gap:8px;}
+  .volume-card .right .n{font-size:32px;font-weight:800;letter-spacing:-0.5px;}
+  .volume-card .right .u{font-size:15px;color:var(--text-dim);font-weight:600;}
+
+  /* Add tile */
+  .add-tile{
+    background:var(--card-soft);
+    border:1.5px dashed rgba(255,255,255,0.14);
+    border-radius:var(--radius-lg);
+    padding:22px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;
+    cursor:pointer;
+    color:var(--text-faint);
+    margin-bottom:12px;
+  }
+  .add-tile svg{width:26px;height:26px;}
+  .add-tile span{font-size:13.5px;font-weight:600;}
+  .add-tile:active{background:#202022;}
+
+  /* ---------- Section title (history/progress views) ---------- */
+  .section-title{
+    font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;
+    color:var(--text-dim);margin:6px 0 12px;
+  }
+
+  /* History list */
+  .history-day{
+    background:var(--card);border-radius:var(--radius-md);
+    padding:16px 18px;margin-bottom:10px;
+  }
+  .history-day .date{
+    display:flex;justify-content:space-between;align-items:center;
+    font-weight:700;font-size:15px;margin-bottom:6px;
+  }
+  .history-day .date .vol{font-family:'JetBrains Mono';font-weight:600;font-size:13px;color:var(--text-dim);}
+  .history-ex{font-size:13.5px;color:var(--text-dim);margin-top:3px;}
+  .history-ex b{color:var(--text);font-weight:600;}
+
+  /* Progress view */
+  .stats-row{display:flex;gap:10px;margin-bottom:18px;}
+  .mini-stat{
+    flex:1;background:var(--card);border-radius:var(--radius-md);padding:14px;
+  }
+  .mini-stat .n{font-size:26px;font-weight:800;}
+  .mini-stat .l{font-size:11px;color:var(--text-dim);margin-top:4px;text-transform:uppercase;letter-spacing:0.4px;}
+  .week-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .week-bar-row .wl{font-size:12.5px;color:var(--text-dim);width:44px;flex:0 0 auto;}
+  .week-bar-track{flex:1;height:10px;background:var(--card);border-radius:5px;overflow:hidden;}
+  .week-bar-fill{height:100%;background:var(--white);border-radius:5px;}
+  .week-bar-row .wv{font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim);width:64px;text-align:right;flex:0 0 auto;}
+
+  /* Perfil view */
+  .perfil-card{background:var(--card);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px;}
+  .perfil-row{display:flex;align-items:center;gap:14px;}
+  .avatar{
+    width:52px;height:52px;border-radius:50%;
+    background:var(--white);color:#000;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:19px;overflow:hidden;
+  }
+  .avatar img{width:100%;height:100%;object-fit:cover;}
+  .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text-faint);display:inline-block;margin-right:6px;}
+  .sync-dot.on{background:#59d17f;}
+  .sync-dot.busy{background:#f2b84b;animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .btn{
+    background:var(--white);color:#000;border:none;
+    padding:12px 16px;border-radius:14px;font-weight:700;font-size:14px;
+    cursor:pointer;width:100%;
+  }
+  .btn.ghost{background:var(--card-soft);color:var(--text);border:1px solid var(--line);}
+  .config-warning{
+    font-size:12.5px;color:var(--text-dim);line-height:1.5;
+    background:var(--card-soft);border-radius:var(--radius-sm);padding:12px 14px;margin-top:14px;
+  }
+  .config-warning b{color:var(--text);}
+
+  /* ---------- Bottom nav ---------- */
+  nav{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    max-width:480px;width:100%;
+    background:rgba(10,10,10,0.92);
+    backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);
+    display:flex;
+    padding-bottom:env(safe-area-inset-bottom, 8px);
+  }
+  nav button{
+    flex:1;background:none;border:none;color:var(--text-faint);
+    padding:14px 0 10px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;
+  }
+  nav button svg{width:23px;height:23px;}
+  nav button.active{color:var(--white);}
+
+  /* ---------- Modals ---------- */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(0,0,0,0.65);
+    display:none;align-items:flex-end;justify-content:center;z-index:50;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal{
+    background:#141416;width:100%;max-width:480px;
+    border-radius:26px 26px 0 0;padding:22px 20px 26px;
+    border-top:1px solid var(--line);
+  }
+  .modal h3{font-size:17px;font-weight:800;margin:0 0 16px;}
+  input,select{
+    background:var(--card);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:12px 14px;
+    border-radius:12px;
+    font-size:15px;
+    font-family:'Inter',sans-serif;
+    width:100%;
+  }
+  input:focus{outline:none;border-color:rgba(255,255,255,0.3);}
+  .set-inputs{display:flex;gap:8px;}
+  .set-inputs input{font-family:'JetBrains Mono';}
+  .add-exercise-form{display:flex;flex-direction:column;gap:10px;}
+  .set-chip{
+    display:inline-flex;align-items:center;gap:6px;background:var(--card);
+    border-radius:8px;padding:5px 9px;font-family:'JetBrains Mono';font-size:12.5px;
+    margin:3px 5px 3px 0;
+  }
+  .set-chip .x{cursor:pointer;color:var(--text-faint);}
+  .set-chip .x:hover{color:var(--white);}
+  .modal-actions{display:flex;gap:10px;margin-top:6px;}
+  .modal-actions .btn{flex:1;}
+
+  .empty-note{color:var(--text-faint);font-size:13.5px;text-align:center;padding:30px 10px;}
+
+  .toast{
+    position:fixed;bottom:96px;left:50%;transform:translateX(-50%);
+    background:var(--card);border:1px solid var(--line);
+    padding:10px 16px;border-radius:10px;font-size:13px;
+    opacity:0;transition:opacity .3s;pointer-events:none;z-index:60;
+    max-width:400px;text-align:center;
+  }
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <h1 class="title">Entrenos</h1>
+    <div class="icon-btns">
+      <button class="icon-circle" id="goPerfil" title="Perfil">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <line x1="6" y1="6" x2="6" y2="18"/><circle cx="6" cy="9" r="2.2"/>
+          <line x1="12" y1="6" x2="12" y2="18"/><circle cx="12" cy="15" r="2.2"/>
+          <line x1="18" y1="6" x2="18" y2="18"/><circle cx="18" cy="11" r="2.2"/>
+        </svg>
+      </button>
+      <button class="icon-circle" id="openAddExercise">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= VIEW: HOY ================= -->
+  <main id="viewHoy">
+    <div class="grid-2">
+      <div class="card ring-card">
+        <div class="top-row">
+          <div class="ring" id="ringToday"></div>
+        </div>
+        <div class="card-title" id="todayTitle">—</div>
+        <div class="card-sub" id="todaySub">—</div>
+      </div>
+      <div class="card tap" id="bwCard">
+        <div class="stat-big"><span class="n" id="bwValue">—</span><span class="u">kg</span></div>
+        <div class="stat-title">Peso corporal</div>
+        <div class="stat-sub" id="bwSub">Sin datos</div>
+      </div>
+    </div>
+
+    <div class="card-wide">
+      <div class="month-cluster-row" id="monthClusterRow"></div>
+      <div class="wide-divider"></div>
+      <div class="prev-session-row">
+        <div class="ring" id="ringPrev"></div>
+        <div class="info">
+          <div class="t" id="prevTitle">—</div>
+          <div class="s" id="prevSub">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="volume-card" id="volumeCard">
+      <div class="left">
+        <div class="t">Volumen levantado</div>
+        <div class="s" id="volumePeriodLabel">Últimos 7 días</div>
+      </div>
+      <div class="right">
+        <span class="n" id="volumeValue">0</span>
+        <span class="u">kg</span>
+      </div>
+    </div>
+
+    <div class="add-tile" id="addTile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      <span>Añadir ejercicio</span>
+    </div>
+  </main>
+
+  <!-- ================= VIEW: HISTORIAL ================= -->
+  <main id="viewHistorial" style="display:none;">
+    <div class="section-title">Historial</div>
+    <div id="historyList"></div>
+  </main>
+
+  <!-- ================= VIEW: PROGRESO ================= -->
+  <main id="viewProgreso" style="display:none;">
+    <div class="section-title">Progreso</div>
+    <div class="stats-row">
+      <div class="mini-stat"><div class="n" id="statStreak">0</div><div class="l">Racha</div></div>
+      <div class="mini-stat"><div class="n" id="statWeek">0</div><div class="l">Sesiones 7d</div></div>
+      <div class="mini-stat"><div class="n" id="statTotal">0</div><div class="l">Total</div></div>
+    </div>
+    <div class="section-title">Volumen por semana</div>
+    <div id="weekBars"></div>
+  </main>
+
+  <!-- ================= VIEW: PERFIL ================= -->
+  <main id="viewPerfil" style="display:none;">
+    <div class="section-title">Perfil y sincronización</div>
+    <div class="perfil-card">
+      <div class="perfil-row" id="perfilAuthRow"></div>
+      <div class="config-warning" id="configWarning" style="display:none;">
+        Firebase no está configurado todavía, así que el login con Google y el sync en la nube están desactivados. Tus datos se guardan solo en <b>este navegador</b>. Mira las instrucciones al final del archivo HTML para activarlo.
+      </div>
+      <div class="config-warning" id="syncStatusNote">
+        <span class="sync-dot" id="syncDot"></span><span id="syncStatusText">Sin sincronizar</span>
+      </div>
+    </div>
+  </main>
+
+  <nav>
+    <button id="navHoy" class="active" title="Hoy">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/>
+        <rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/>
+      </svg>
+    </button>
+    <button id="navHistorial" title="Historial">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3.5" y="4.5" width="17" height="16" rx="3"/><line x1="3.5" y1="9.5" x2="20.5" y2="9.5"/>
+        <line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/>
+      </svg>
+    </button>
+    <button id="navProgreso" title="Progreso">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/>
+      </svg>
+    </button>
+    <button id="navPerfil" title="Perfil">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 19c0-3.3-4-5-9-5s-9 1.7-9 5"/><circle cx="12" cy="7" r="4"/>
+      </svg>
+    </button>
+  </nav>
+</div>
+
+<!-- Add exercise modal -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h3>Añadir ejercicio</h3>
+    <div class="add-exercise-form">
+      <input list="exerciseSuggestions" id="exerciseNameInput" placeholder="Nombre del ejercicio (ej. Press banca)">
+      <datalist id="exerciseSuggestions"></datalist>
+      <div class="set-inputs">
+        <input type="number" id="repsInput" placeholder="Reps" inputmode="numeric">
+        <input type="number" id="weightInput" placeholder="Peso (kg)" inputmode="decimal">
+        <button class="btn ghost" id="addSetBtn" style="flex:0 0 auto;width:auto;padding:12px 14px;">+ Set</button>
+      </div>
+      <div id="currentSetsChips"></div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="cancelExercise">Cancelar</button>
+        <button class="btn" id="saveExercise">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Body weight modal -->
+<div class="modal-backdrop" id="bwModalBackdrop">
+  <div class="modal">
+    <h3>Registrar peso corporal</h3>
+    <div class="add-exercise-form">
+      <input type="number" id="bwInput" placeholder="Peso en kg" inputmode="decimal">
+      <div class="modal-actions">
+        <button class="btn ghost" id="bwCancel">Cancelar</button>
+        <button class="btn" id="bwSave">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+/* =========================================================
+   GYMLOG — lógica de la app
+   ========================================================= */
+
+// ---------- 1. CONFIGURA AQUÍ TU FIREBASE ----------
+const firebaseConfig = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
+const FIREBASE_ENABLED = !!firebaseConfig.apiKey;
+// -----------------------------------------------------
+
+const LS_KEY = 'gymlog_data_v2';
+let state = { sessions: [], bodyWeights: [] };
+let currentUser = null;
+let draftSets = [];
+let db=null, auth=null, googleProvider=null;
+
+const WEEKDAYS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const MONTHS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const VOL_GOAL_EXERCISES = 5; // used only for ring fraction visuals
+let volumePeriodIdx = 0;
+const VOL_PERIODS = [
+  { label:'Últimos 7 días', days:7 },
+  { label:'Últimos 30 días', days:30 },
+  { label:'Total', days:null }
+];
+
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      state.sessions = parsed.sessions || [];
+      state.bodyWeights = parsed.bodyWeights || [];
+    }
+  }catch(e){ console.error('Error leyendo localStorage', e); }
+}
+function saveLocal(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+function getSession(dateStr){
+  return state.sessions.find(s => s.date === dateStr);
+}
+function getOrCreateTodaySession(){
+  let s = getSession(todayStr());
+  if(!s){ s = { id:'local_'+Date.now(), date:todayStr(), exercises:[] }; state.sessions.push(s); }
+  return s;
+}
+function sessionVolume(session){
+  let v = 0;
+  session.exercises.forEach(ex => ex.sets.forEach(s => v += (s.reps * s.weight)));
+  return v;
+}
+function sessionTitle(session){
+  if(!session || session.exercises.length === 0) return null;
+  const names = session.exercises.map(e => e.name);
+  if(names.length <= 3) return names.join(' + ');
+  return names.slice(0,2).join(' + ') + ` +${names.length-2}`;
+}
+function timeAgo(ts){
+  const diffMs = Date.now() - ts;
+  const min = Math.floor(diffMs/60000);
+  if(min < 1) return 'ahora mismo';
+  if(min < 60) return `hace ${min} min`;
+  const h = Math.floor(min/60);
+  if(h < 24) return `hace ${h} h`;
+  const d = Math.floor(h/24);
+  return `hace ${d} d`;
+}
+
+// ---------- Ring rendering ----------
+function ringSVG(fraction){
+  const r = 24, c = 2*Math.PI*r;
+  const pct = Math.max(0, Math.min(1, fraction));
+  const dash = c * pct;
+  return `<svg viewBox="0 0 56 56">
+    <circle cx="28" cy="28" r="${r}" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="4"/>
+    <circle cx="28" cy="28" r="${r}" fill="none" stroke="#ffffff" stroke-width="4"
+      stroke-dasharray="${dash} ${c}" stroke-linecap="round"/>
+  </svg>`;
+}
+function renderRing(elId, count, numLabel){
+  const el = document.getElementById(elId);
+  const fraction = count / VOL_GOAL_EXERCISES;
+  el.innerHTML = ringSVG(fraction) + `<div class="num">${numLabel}</div>`;
+}
+
+// ---------- Dot calendar ----------
+function renderMonthClusters(){
+  const row = document.getElementById('monthClusterRow');
+  row.innerHTML = '';
+  const sessionDates = new Set(state.sessions.filter(s=>s.exercises.length>0).map(s=>s.date));
+  const now = new Date();
+  const clusters = [];
+  for(let i=2;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    clusters.push(d);
+  }
+  clusters.forEach(monthDate => {
+    const year = monthDate.getFullYear(), month = monthDate.getMonth();
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const wrap = document.createElement('div');
+    wrap.className = 'month-cluster';
+    const label = document.createElement('div');
+    label.className = 'month-label';
+    label.textContent = MONTHS[month];
+    wrap.appendChild(label);
+    const grid = document.createElement('div');
+    grid.className = 'dot-grid';
+    for(let day=1; day<=daysInMonth; day++){
+      const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (sessionDates.has(ds) ? ' on' : '');
+      grid.appendChild(dot);
+    }
+    wrap.appendChild(grid);
+    row.appendChild(wrap);
+  });
+}
+
+// ---------- Main render ----------
+function renderHoy(){
+  const today = getSession(todayStr());
+  const todayExCount = today ? today.exercises.length : 0;
+  renderRing('ringToday', todayExCount, todayExCount);
+  document.getElementById('todayTitle').textContent = (today && sessionTitle(today)) || 'Sin registrar';
+  document.getElementById('todaySub').textContent = cap(WEEKDAYS[new Date().getDay()]);
+
+  // body weight
+  const bws = [...state.bodyWeights].sort((a,b)=>b.ts-a.ts);
+  const latest = bws[0];
+  document.getElementById('bwValue').textContent = latest ? latest.weight : '—';
+  document.getElementById('bwSub').textContent = latest ? timeAgo(latest.ts) : 'Sin datos';
+
+  renderMonthClusters();
+
+  // previous session (most recent session before today with exercises)
+  const prev = [...state.sessions]
+    .filter(s => s.date !== todayStr() && s.exercises.length > 0)
+    .sort((a,b) => b.date.localeCompare(a.date))[0];
+  const prevCount = prev ? prev.exercises.length : 0;
+  renderRing('ringPrev', prevCount, prevCount);
+  document.getElementById('prevTitle').textContent = (prev && sessionTitle(prev)) || 'Sin sesiones anteriores';
+  document.getElementById('prevSub').textContent = prev ? cap(WEEKDAYS[new Date(prev.date+'T00:00:00').getDay()]) : '—';
+
+  renderVolumeCard();
+}
+
+function renderVolumeCard(){
+  const period = VOL_PERIODS[volumePeriodIdx];
+  document.getElementById('volumePeriodLabel').textContent = period.label;
+  let sessions = state.sessions;
+  if(period.days){
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-(period.days-1));
+    sessions = sessions.filter(s => new Date(s.date+'T00:00:00') >= cutoff);
+  }
+  const total = sessions.reduce((acc,s)=>acc+sessionVolume(s),0);
+  document.getElementById('volumeValue').textContent = total.toLocaleString('es-ES');
+}
+document.getElementById('volumeCard').addEventListener('click', () => {
+  volumePeriodIdx = (volumePeriodIdx+1) % VOL_PERIODS.length;
+  renderVolumeCard();
+});
+
+function renderHistorial(){
+  const list = document.getElementById('historyList');
+  list.innerHTML = '';
+  const sorted = [...state.sessions].filter(s=>s.exercises.length>0).sort((a,b)=>b.date.localeCompare(a.date));
+  if(sorted.length === 0){
+    list.innerHTML = `<div class="empty-note">Sin historial todavía. Añade tu primer ejercicio desde "Hoy".</div>`;
+    return;
+  }
+  sorted.forEach(session => {
+    const day = document.createElement('div');
+    day.className = 'history-day';
+    const vol = sessionVolume(session);
+    const exHtml = session.exercises.map(ex => {
+      const setsText = ex.sets.map(s=>`${s.reps}×${s.weight}`).join(', ');
+      return `<div class="history-ex"><b>${escapeHtml(ex.name)}</b> — ${setsText} kg</div>`;
+    }).join('');
+    const d = new Date(session.date+'T00:00:00');
+    day.innerHTML = `<div class="date"><span>${cap(WEEKDAYS[d.getDay()])}, ${d.getDate()} ${MONTHS[d.getMonth()]}</span><span class="vol">${vol.toLocaleString('es-ES')} kg</span></div>${exHtml}`;
+    list.appendChild(day);
+  });
+}
+
+function renderProgreso(){
+  document.getElementById('statTotal').textContent = state.sessions.filter(s=>s.exercises.length>0).length;
+  const now = new Date();
+  const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-6);
+  const weekCount = state.sessions.filter(s => s.exercises.length>0 && new Date(s.date+'T00:00:00') >= weekAgo).length;
+  document.getElementById('statWeek').textContent = weekCount;
+
+  let streak = 0, cursor = new Date();
+  const sessionDates = new Set(state.sessions.filter(s=>s.exercises.length>0).map(s=>s.date));
+  while(true){
+    const ds = cursor.toISOString().slice(0,10);
+    if(sessionDates.has(ds)){ streak++; cursor.setDate(cursor.getDate()-1); } else break;
+  }
+  document.getElementById('statStreak').textContent = streak;
+
+  // volume by week (last 6 weeks)
+  const weeks = [];
+  for(let i=5;i>=0;i--){
+    const end = new Date(); end.setDate(end.getDate()-(i*7));
+    const start = new Date(end); start.setDate(end.getDate()-6);
+    const vol = state.sessions
+      .filter(s => { const d=new Date(s.date+'T00:00:00'); return d>=start && d<=end; })
+      .reduce((acc,s)=>acc+sessionVolume(s),0);
+    weeks.push({ label: i===0 ? 'Esta sem.' : `Sem. -${i}`, vol });
+  }
+  const maxVol = Math.max(1, ...weeks.map(w=>w.vol));
+  const wrap = document.getElementById('weekBars');
+  wrap.innerHTML = '';
+  weeks.forEach(w => {
+    const row = document.createElement('div');
+    row.className = 'week-bar-row';
+    row.innerHTML = `<div class="wl">${w.label}</div><div class="week-bar-track"><div class="week-bar-fill" style="width:${(w.vol/maxVol*100).toFixed(0)}%"></div></div><div class="wv">${w.vol.toLocaleString('es-ES')} kg</div>`;
+    wrap.appendChild(row);
+  });
+}
+
+function updateExerciseSuggestions(){
+  const names = new Set();
+  state.sessions.forEach(s => s.exercises.forEach(ex => names.add(ex.name)));
+  const datalist = document.getElementById('exerciseSuggestions');
+  datalist.innerHTML = '';
+  names.forEach(n => { const o=document.createElement('option'); o.value=n; datalist.appendChild(o); });
+}
+function escapeHtml(str){ const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
+
+function persistAndRender(){
+  saveLocal();
+  renderHoy();
+  renderHistorial();
+  renderProgreso();
+  updateExerciseSuggestions();
+  syncToCloudDebounced();
+}
+
+// ---------- Views / nav ----------
+const views = ['Hoy','Historial','Progreso','Perfil'];
+function switchView(view){
+  views.forEach(v => {
+    document.getElementById('view'+v).style.display = (v===view) ? 'block' : 'none';
+    document.getElementById('nav'+v).classList.toggle('active', v===view);
+  });
+}
+document.getElementById('navHoy').addEventListener('click', ()=>switchView('Hoy'));
+document.getElementById('navHistorial').addEventListener('click', ()=>switchView('Historial'));
+document.getElementById('navProgreso').addEventListener('click', ()=>switchView('Progreso'));
+document.getElementById('navPerfil').addEventListener('click', ()=>switchView('Perfil'));
+document.getElementById('goPerfil').addEventListener('click', ()=>switchView('Perfil'));
+
+// ---------- Add exercise modal ----------
+const modalBackdrop = document.getElementById('modalBackdrop');
+function openAddModal(){
+  draftSets = [];
+  document.getElementById('exerciseNameInput').value = '';
+  document.getElementById('repsInput').value = '';
+  document.getElementById('weightInput').value = '';
+  renderDraftSets();
+  modalBackdrop.classList.add('open');
+}
+document.getElementById('openAddExercise').addEventListener('click', openAddModal);
+document.getElementById('addTile').addEventListener('click', openAddModal);
+document.getElementById('cancelExercise').addEventListener('click', ()=>modalBackdrop.classList.remove('open'));
+modalBackdrop.addEventListener('click', e => { if(e.target===modalBackdrop) modalBackdrop.classList.remove('open'); });
+
+document.getElementById('addSetBtn').addEventListener('click', () => {
+  const reps = parseInt(document.getElementById('repsInput').value);
+  const weight = parseFloat(document.getElementById('weightInput').value);
+  if(!reps || isNaN(weight)){ showToast('Pon reps y peso válidos'); return; }
+  draftSets.push({reps, weight});
+  document.getElementById('repsInput').value = '';
+  document.getElementById('weightInput').value = '';
+  document.getElementById('repsInput').focus();
+  renderDraftSets();
+});
+function renderDraftSets(){
+  const wrap = document.getElementById('currentSetsChips');
+  wrap.innerHTML = '';
+  draftSets.forEach((s,i) => {
+    const chip = document.createElement('span');
+    chip.className = 'set-chip';
+    chip.innerHTML = `${s.reps}×${s.weight}kg <span class="x" data-i="${i}">✕</span>`;
+    wrap.appendChild(chip);
+  });
+  wrap.querySelectorAll('.x').forEach(x => x.addEventListener('click', ()=>{ draftSets.splice(parseInt(x.dataset.i),1); renderDraftSets(); }));
+}
+document.getElementById('saveExercise').addEventListener('click', () => {
+  const name = document.getElementById('exerciseNameInput').value.trim();
+  if(!name){ showToast('Ponle un nombre al ejercicio'); return; }
+  if(draftSets.length===0){ showToast('Añade al menos un set'); return; }
+  const today = getOrCreateTodaySession();
+  today.exercises.push({ name, sets:[...draftSets] });
+  modalBackdrop.classList.remove('open');
+  persistAndRender();
+  showToast('Ejercicio guardado');
+});
+
+// ---------- Body weight modal ----------
+const bwModal = document.getElementById('bwModalBackdrop');
+document.getElementById('bwCard').addEventListener('click', () => {
+  document.getElementById('bwInput').value = '';
+  bwModal.classList.add('open');
+});
+document.getElementById('bwCancel').addEventListener('click', ()=>bwModal.classList.remove('open'));
+bwModal.addEventListener('click', e => { if(e.target===bwModal) bwModal.classList.remove('open'); });
+document.getElementById('bwSave').addEventListener('click', () => {
+  const w = parseFloat(document.getElementById('bwInput').value);
+  if(!w || w<=0){ showToast('Peso no válido'); return; }
+  state.bodyWeights.push({ date:todayStr(), weight:w, ts:Date.now() });
+  bwModal.classList.remove('open');
+  persistAndRender();
+  showToast('Peso registrado');
+});
+
+// ---------- Toast ----------
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// =========================================================
+// FIREBASE
+// =========================================================
+async function initFirebase(){
+  if(!FIREBASE_ENABLED){
+    document.getElementById('configWarning').style.display = 'block';
+    renderPerfilAuthArea();
+    return;
+  }
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+  const authMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+  const fsMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+
+  const app = initializeApp(firebaseConfig);
+  auth = authMod.getAuth(app);
+  googleProvider = new authMod.GoogleAuthProvider();
+  db = fsMod.getFirestore(app);
+  window._fs = fsMod; window._authMod = authMod;
+
+  authMod.onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    renderPerfilAuthArea();
+    if(user){ await mergeFromCloud(); persistAndRender(); }
+  });
+}
+
+function renderPerfilAuthArea(){
+  const el = document.getElementById('perfilAuthRow');
+  if(!FIREBASE_ENABLED){
+    el.innerHTML = `<div class="avatar">?</div><div><div style="font-weight:700;">Sync desactivado</div><div style="font-size:13px;color:var(--text-dim);">Configura Firebase para activarlo</div></div>`;
+    return;
+  }
+  if(currentUser){
+    const initial = (currentUser.displayName || currentUser.email || '?')[0].toUpperCase();
+    el.innerHTML = `
+      <div class="avatar">${currentUser.photoURL ? `<img src="${currentUser.photoURL}">` : initial}</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;">${escapeHtml(currentUser.displayName || currentUser.email || '')}</div>
+        <div style="font-size:13px;color:var(--text-dim);">Sincronizado con Firestore</div>
+      </div>
+      <button class="btn ghost" id="logoutBtn" style="width:auto;padding:9px 14px;">Salir</button>
+    `;
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await window._authMod.signOut(auth);
+      showToast('Sesión cerrada. Tus datos siguen en este dispositivo.');
+    });
+  } else {
+    el.innerHTML = `<button class="btn" id="loginBtn">Iniciar sesión con Google</button>`;
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      try{ await window._authMod.signInWithPopup(auth, googleProvider); showToast('Sesión iniciada'); }
+      catch(e){ console.error(e); showToast('No se pudo iniciar sesión'); }
+    });
+  }
+}
+
+function setSyncDot(mode, text){
+  const dot = document.getElementById('syncDot');
+  dot.classList.remove('on','busy');
+  if(mode==='on') dot.classList.add('on');
+  if(mode==='busy') dot.classList.add('busy');
+  document.getElementById('syncStatusText').textContent = text;
+}
+
+async function mergeFromCloud(){
+  if(!currentUser) return;
+  setSyncDot('busy','Sincronizando...');
+  try{
+    const { doc, getDoc } = window._fs;
+    const ref = doc(db, 'users', currentUser.uid, 'gymlog', 'data');
+    const snap = await getDoc(ref);
+    if(snap.exists()){
+      const cloud = snap.data();
+      const cloudSessions = cloud.sessions || [];
+      const byDate = {};
+      [...cloudSessions, ...state.sessions].forEach(s => {
+        if(!byDate[s.date] || s.exercises.length > byDate[s.date].exercises.length) byDate[s.date] = s;
+      });
+      state.sessions = Object.values(byDate);
+      state.bodyWeights = [...(cloud.bodyWeights||[]), ...state.bodyWeights]
+        .filter((bw,i,arr)=>arr.findIndex(b=>b.ts===bw.ts)===i);
+    }
+    setSyncDot('on','Sincronizado');
+  }catch(e){ console.error('Error en mergeFromCloud', e); setSyncDot('','Error de sincronización'); }
+}
+
+let syncTimer;
+function syncToCloudDebounced(){
+  if(!FIREBASE_ENABLED || !currentUser) return;
+  setSyncDot('busy','Sincronizando...');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    try{
+      const { doc, setDoc } = window._fs;
+      const ref = doc(db, 'users', currentUser.uid, 'gymlog', 'data');
+      await setDoc(ref, { sessions: state.sessions, bodyWeights: state.bodyWeights, updatedAt: Date.now() });
+      setSyncDot('on','Sincronizado');
+    }catch(e){ console.error('Error subiendo a Firestore', e); setSyncDot('','Error de sincronización'); }
+  }, 900);
+}
+
+// ---------- Init ----------
+loadLocal();
+renderHoy();
+renderHistorial();
+renderProgreso();
+updateExerciseSuggestions();
+initFirebase();
+
+</script>
+</body>
+</html>
+<!--
+===========================================================================
+ CÓMO ACTIVAR EL LOGIN CON GOOGLE Y EL SYNC EN LA NUBE (Firebase)
+===========================================================================
+
+1. Ve a https://console.firebase.google.com y crea un proyecto nuevo
+   (gratis, no hace falta tarjeta para esto).
+
+2. Dentro del proyecto:
+   a) Ve a "Build > Authentication" > pestaña "Sign-in method" >
+      activa el proveedor "Google".
+   b) Ve a "Build > Firestore Database" > "Create database" >
+      empieza en modo de producción (luego ajustamos las reglas abajo).
+
+3. Ve a "Project settings" (el icono de engranaje) > baja hasta
+   "Your apps" > pulsa el icono web </> para registrar una app web.
+   Te dará un objeto de configuración parecido a esto:
+
+     const firebaseConfig = {
+       apiKey: "AIza...",
+       authDomain: "tuproyecto.firebaseapp.com",
+       projectId: "tuproyecto",
+       storageBucket: "tuproyecto.appspot.com",
+       messagingSenderId: "123456789",
+       appId: "1:123456789:web:abc123"
+     };
+
+4. Copia ese objeto y pégalo en este archivo, sustituyendo el
+   "const firebaseConfig = {...}" que está cerca del principio del
+   <script type="module">.
+
+5. Reglas de seguridad de Firestore (pestaña "Rules" en Firestore
+   Database) — pega esto para que cada usuario solo pueda leer/escribir
+   sus propios datos:
+
+     rules_version = '2';
+     service cloud.firestore {
+       match /databases/{database}/documents {
+         match /users/{userId}/gymlog/{docId} {
+           allow read, write: if request.auth != null && request.auth.uid == userId;
+         }
+       }
+     }
+
+6. Si vas a alojar el archivo en algún dominio (Netlify, Vercel, GitHub
+   Pages...), añade ese dominio en Authentication > Settings >
+   "Authorized domains", si no el login con popup de Google fallará.
+
+7. Abre el archivo en el navegador (doble clic, o súbelo a cualquier
+   hosting estático). Verás el botón "Iniciar sesión con Google" activo
+   en la pestaña Perfil en vez de "Sync desactivado".
+
+Nota: mientras no rellenes firebaseConfig, la app funciona 100% con
+localStorage — no perderás nada, solo no habrá sync entre dispositivos.
+===========================================================================
+-->
